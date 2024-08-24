@@ -1,5 +1,4 @@
-
-version: '3.8'
+name: inception
 
 services:
   nginx:
@@ -8,34 +7,37 @@ services:
       - "443:443"
     volumes:
       - ./data/nginx:/etc/nginx/conf.d
-    environment:
-      - DOMAIN_NAME=${DOMAIN_NAME}
+      - ./data/wordpress:/var/www/html
+    env_file:
+      - .env
     networks:
       - inception_network
+    restart: always
 
   wordpress:
     build: ./wordpress
+    ports:
+      - "9000:9000"
     volumes:
       - ./data/wordpress:/var/www/html
-    environment:
-      - WORDPRESS_DB_HOST=mariadb:3306
-      - WORDPRESS_DB_NAME=wordpress
-      - WORDPRESS_DB_USER=${MYSQL_USER}
-      - WORDPRESS_DB_PASSWORD=${MYSQL_PASSWORD}
+    env_file:
+      - .env
     networks:
       - inception_network
+    depends_on:
+      - mariadb
 
   mariadb:
+    image: mariadb
     build: ./mariadb
     volumes:
       - ./data/mariadb:/var/lib/mysql
-    environment:
-      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
-      - MYSQL_DATABASE=wordpress
-      - MYSQL_USER=${MYSQL_USER}
-      - MYSQL_PASSWORD=${MYSQL_PASSWORD}
+    env_file:
+      - .env
     networks:
       - inception_network
+    depends_on:
+      - nginx
 
 networks:
   inception_network:

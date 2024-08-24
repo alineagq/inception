@@ -1,8 +1,12 @@
-# Use a specific stable version of MariaDB
 FROM mariadb:10.5
 
-# Expose port 3306 for MariaDB
+USER root
+
+RUN id "mysql" &>/dev/null && userdel mysql || true \
+    && useradd -u 999 mysql || true \
+    && mkdir -p /data/mysql \
+    && chown -R mysql:mysql /data/mysql
+
 EXPOSE 3306
 
-# Use the default entrypoint for MariaDB
 CMD ["mysqld"]
