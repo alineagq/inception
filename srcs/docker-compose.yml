@@ -1,44 +1,39 @@
-name: inception
+name: "inception"
 
 services:
   nginx:
-    build: ./nginx
-    ports:
-      - "443:443"
-    volumes:
-      - ./data/nginx:/etc/nginx/conf.d
-      - ./data/wordpress:/var/www/html
+    container_name: nginx
+    build: requirements/nginx
     env_file:
       - .env
+    ports:
+      - 443:443
+    volumes:
+      - ./web:/var/www/html
+    depends_on:
+      - wordpress
+      - mariadb
     networks:
-      - inception_network
+      - docker-network
     restart: always
-
+  
   wordpress:
-    build: ./wordpress
-    ports:
-      - "9000:9000"
+    container_name: wordpress
+    build: requirements/wordpress
     volumes:
-      - ./data/wordpress:/var/www/html
-    env_file:
-      - .env
-    networks:
-      - inception_network
+      - ./web:/var/www/html
     depends_on:
       - mariadb
+    networks:
+      - docker-network
 
   mariadb:
-    image: mariadb
-    build: ./mariadb
+    container_name: mariadb
+    build: requirements/mariadb
     volumes:
-      - ./data/mariadb:/var/lib/mysql
-    env_file:
-      - .env
+      - ./db:/var/lib/mysql
     networks:
-      - inception_network
-    depends_on:
-      - nginx
+      - docker-network
 
 networks:
-  inception_network:
-    driver: bridge
+  docker-network:
