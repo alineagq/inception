@@ -1,0 +1,4 @@
+# datadog.yaml
+api_key: <<datadog_key>>
+logs_enabled: true
+apm_enabled: true

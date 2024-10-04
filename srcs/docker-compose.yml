@@ -14,18 +14,23 @@ services:
       - wordpress
       - mariadb
     networks:
-      - docker-network
+      - inception
     restart: always
   
   wordpress:
     container_name: wordpress
     build: requirements/wordpress
+    environment:
+      - DD_AGENT_HOST=datadog-agent
+      - DD_SERVICE=wordpress
+      - DD_ENV=production
+      - DD_TRACE_ENABLED=true 
     volumes:
       - ./web:/var/www/html
     depends_on:
       - mariadb
     networks:
-      - docker-network
+      - inception
 
   mariadb:
     container_name: mariadb
@@ -33,7 +38,23 @@ services:
     volumes:
       - ./db:/var/lib/mysql
     networks:
-      - docker-network
+      - inception
+  datadog:
+    container_name: datadog
+    build: bonus/datadog
+    environment:
+      - DD_API_KEY=<sua_chave_de_api>
+      - DD_LOGS_ENABLED=true
+      - DD_APM_ENABLED=true 
+    ports:
+      - 8125:8125/udp
+      - 8126:8126
+      - 8125:8125
+    networks:
+      - inception
+    depends_on:
+      - nginx
+    restart: always
 
 networks:
-  docker-network:
+  inception:
