@@ -1,60 +1,69 @@
-name: "inception"
+version: '3.8'
 
 services:
+
   nginx:
     container_name: nginx
-    build: requirements/nginx
+    build: requirements/nginx/
     env_file:
       - .env
     ports:
-      - 443:443
+      - "443:443"
     volumes:
-      - ./web:/var/www/html
-    depends_on:
-      - wordpress
-      - mariadb
-    networks:
-      - inception
+      - wordpress:/var/www/wordpress
     restart: always
-  
-  wordpress:
-    container_name: wordpress
-    build: requirements/wordpress
-    environment:
-      - DD_AGENT_HOST=datadog-agent
-      - DD_SERVICE=wordpress
-      - DD_ENV=production
-      - DD_TRACE_ENABLED=true 
-    volumes:
-      - ./web:/var/www/html
-    depends_on:
-      - mariadb
     networks:
       - inception
 
   mariadb:
     container_name: mariadb
-    build: requirements/mariadb
+    build: requirements/mariadb/
+    env_file:
+      - .env
     volumes:
-      - ./db:/var/lib/mysql
+      - mariadb:/var/lib/mysql
     networks:
       - inception
-  datadog:
-    container_name: datadog
-    build: bonus/datadog
-    environment:
-      - DD_API_KEY=<sua_chave_de_api>
-      - DD_LOGS_ENABLED=true
-      - DD_APM_ENABLED=true 
-    ports:
-      - 8125:8125/udp
-      - 8126:8126
-      - 8125:8125
-    networks:
-      - inception
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+
+  wordpress:
+    container_name: wordpress
+    build: requirements/wordpress/
+    env_file:
+      - .env
+    volumes:
+      - wordpress:/var/www/wordpress
     depends_on:
-      - nginx
-    restart: always
+      mariadb:
+        condition: service_healthy
+    networks:
+      - inception
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost/wp-admin/install.php || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+
+volumes:
+  wordpress:
+    driver: local
+    driver_opts:
+      type: none
+      device: /home/fer/inception/data/wordpress
+      o: bind
+
+  mariadb:
+    driver: local
+    driver_opts:
+      type: none
+      device: /home/fer/inception/data/mariadb
+      o: bind
 
 networks:
   inception:

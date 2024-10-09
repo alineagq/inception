@@ -1,13 +1,17 @@
-FROM debian:11.10
+FROM    alpine:3.19.4
 
-RUN apt-get update && apt-get install -y nginx openssl
+RUN apk update && \
+    apk upgrade && \
+    apk add	nginx \
+              openssl
 
-RUN mkdir /etc/nginx/ssl \
-    && openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
-    -keyout /etc/nginx/ssl/nginx.key \
-    -out /etc/nginx/ssl/nginx.crt \
-    -subj "/C=US/ST=Denial/L=Springfield/O=Dis/CN=alinequeiroz@42.fr"
+RUN mkdir -p etc/nginx/ssl
 
-COPY default /etc/nginx/sites-available/.
+RUN openssl req -newkey rsa:4096 -x509 -sha256 -days 365 -nodes \
+       -out /etc/nginx/ssl/aqueiroz.crt \
+       -keyout /etc/nginx/ssl/aqueiroz.key \
+       -subj "/C=FR/ST=Paris/L=Paris/O=42 School/OU=aqueiroz/CN=aqueiroz/"
 
-CMD ["nginx", "-g", "daemon off;"]
+COPY conf/nginx.conf /etc/nginx/nginx.conf
+
+CMD [ "nginx", "-g", "daemon off;" ]

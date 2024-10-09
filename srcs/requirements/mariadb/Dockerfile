@@ -1,11 +1,22 @@
-FROM debian:latest
+FROM alpine:3.19.4
 
-RUN apt-get update && apt-get install -y mariadb-server
+RUN apk update && \
+    apk upgrade && \
+    apk add	mariadb mariadb-client
 
-COPY 50-server.cnf /etc/mysql/mariadb.conf.d/.
-COPY init.sql /etc/mysql/init.sql
-COPY script.sh .
+COPY tools/mariadb-server.cnf /etc/my.cnf
 
-RUN mkdir -p /var/run/mysqld && chmod +x script.sh
+RUN mkdir -p /var/lib/mysql /var/log/mysqld /var/run/mysqld && \
+    chown -R mysql:mysql /var/lib/mysql /var/log/mysqld /var/run/mysqld
 
-CMD ["./script.sh"]
+# Initialize the database
+
+COPY tools/start_mariadb.sh /usr/bin/start_mariadb.sh
+
+RUN mariadb-install-db --user=mysql --datadir=/var/lib/mysql
+
+RUN chmod +x /usr/bin/start_mariadb.sh
+
+EXPOSE 3306
+
+ENTRYPOINT [ "/usr/bin/start_mariadb.sh" ]
