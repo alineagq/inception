@@ -1,16 +1,22 @@
 #!/bin/sh
 
-# Start MariaDB
-
-
+# Criar script SQL para configuração do MariaDB
 echo "CREATE DATABASE IF NOT EXISTS $MYSQL_DATABASE ;" > db1.sql
-echo "CREATE USER IF NOT EXISTS '$MYSQL_USER'@'%' IDENTIFIED BY '$MYSQL_PASSWORD' ;" >> db1.sql
-echo "GRANT ALL PRIVILEGES ON $MYSQL_DATABASE.* TO '$MYSQL_USER'@'%' ;" >> db1.sql
-echo "ALTER USER '$MYSQL_ROOT_USER'@'wordpress.srcs_inception' IDENTIFIED BY '$MYSQL_ROOT_PASSWORD' ;" >> db1.sql
+echo "CREATE USER IF NOT EXISTS '$MYSQL_USER'@'wordpress' IDENTIFIED BY '$MYSQL_PASSWORD' ;" >> db1.sql
+echo "GRANT ALL PRIVILEGES ON $MYSQL_DATABASE.* TO '$MYSQL_USER'@'wordpress' ;" >> db1.sql
 echo "FLUSH PRIVILEGES;" >> db1.sql
 
+# Iniciar MariaDB
+mariadbd-safe --datadir=/var/lib/mysql &
 sleep 8
 
-mariadbd-safe < db1.sql
+# Executar script SQL
+mariadb -u root -p"$MYSQL_ROOT_PASSWORD" < db1.sql
 
-mariadbd-safe -F
+# Verificar conectividade do banco de dados
+until mariadb -u"$MYSQL_USER" -p"$MYSQL_PASSWORD" -h"mariadb" -e "SELECT 1;" >/dev/null 2>&1; do
+    echo "Waiting for MariaDB to accept connections..."
+    sleep 2
+done
+
+echo "MariaDB setup complete."

@@ -55,14 +55,14 @@ volumes:
     driver: local
     driver_opts:
       type: none
-      device: /home/fer/inception/data/wordpress
+      device: /home/aqueiroz/inception/data/wordpress
       o: bind
 
   mariadb:
     driver: local
     driver_opts:
       type: none
-      device: /home/fer/inception/data/mariadb
+      device: /home/aqueiroz/inception/data/mariadb
       o: bind
 
 networks:
