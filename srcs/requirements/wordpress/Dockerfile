@@ -1,4 +1,4 @@
-FROM alpine:3.19.4
+FROM alpine:3.20.5
 
 RUN apk update && \
     apk upgrade && \
@@ -14,26 +14,25 @@ RUN apk update && \
             php82-zlib \
             php82-phar \
             mysql-client \
-            curl
+            curl && \
+            ln -s /usr/bin/php82 /usr/bin/php && \
+            ln -s /usr/bin/php-fpm82 /usr/bin/php-fpm
 
 RUN curl -O https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar
 
-RUN chmod +x wp-cli.phar
-
-RUN mv wp-cli.phar /usr/local/bin/wp
+RUN chmod +x wp-cli.phar && mv wp-cli.phar /usr/local/bin/wp
 
 WORKDIR /var/www/wordpress
 
-RUN wp core download --path=/var/www/wordpress
+RUN echo "memory_limit = 512M" >> /etc/php82/php.ini
+
+RUN mkdir -p /run/php /var/www/wordpress
 
 COPY tools/start_wordpress.sh /usr/bin/start_wordpress.sh
-
 RUN chmod +x /usr/bin/start_wordpress.sh
 
-RUN mkdir -p /run/php
+RUN echo "listen = 0.0.0.0:9000" >> /etc/php82/php-fpm.d/www.conf
 
 EXPOSE 9000
-
-RUN echo "listen = 0.0.0.0:9000" >> /etc/php82/php-fpm.d/www.conf
 
 ENTRYPOINT [ "/usr/bin/start_wordpress.sh" ]

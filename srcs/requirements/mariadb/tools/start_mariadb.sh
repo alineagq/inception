@@ -1,22 +1,27 @@
 #!/bin/sh
+# Create the initialization SQL file at /db1.sql
 
-# Criar script SQL para configuração do MariaDB
-echo "CREATE DATABASE IF NOT EXISTS $MYSQL_DATABASE ;" > db1.sql
-echo "CREATE USER IF NOT EXISTS '$MYSQL_USER'@'wordpress' IDENTIFIED BY '$MYSQL_PASSWORD' ;" >> db1.sql
-echo "GRANT ALL PRIVILEGES ON $MYSQL_DATABASE.* TO '$MYSQL_USER'@'wordpress' ;" >> db1.sql
-echo "FLUSH PRIVILEGES;" >> db1.sql
+cat <<EOF > /db1.sql
+CREATE DATABASE IF NOT EXISTS $MYSQL_DATABASE;
+CREATE USER IF NOT EXISTS '$MYSQL_USER'@'%' IDENTIFIED BY '$MYSQL_PASSWORD';
+GRANT ALL PRIVILEGES ON $MYSQL_DATABASE.* TO '$MYSQL_USER'@'%';
+FLUSH PRIVILEGES;
+EOF
 
-# Iniciar MariaDB
-mariadbd-safe --datadir=/var/lib/mysql &
-sleep 8
+# If an admin user is defined, add its creation and privileges
+if [ -n "$MYSQL_ADMIN_USER" ]; then
+cat <<EOF >> /db1.sql
+CREATE USER IF NOT EXISTS '$MYSQL_ADMIN_USER'@'%' IDENTIFIED BY '$MYSQL_ADMIN_PASSWORD';
+GRANT ALL PRIVILEGES ON $MYSQL_DATABASE.* TO '$MYSQL_ADMIN_USER'@'%';
+FLUSH PRIVILEGES;
+EOF
+fi
 
-# Executar script SQL
-mariadb -u root -p"$MYSQL_ROOT_PASSWORD" < db1.sql
+# Initialize the database if not already created
+if [ ! -d "/var/lib/mysql/mysql" ]; then
+    echo "Initializing the database..."
+    mariadb-install-db --user=mysql --datadir=/var/lib/mysql
+fi
 
-# Verificar conectividade do banco de dados
-until mariadb -u"$MYSQL_USER" -p"$MYSQL_PASSWORD" -h"mariadb" -e "SELECT 1;" >/dev/null 2>&1; do
-    echo "Waiting for MariaDB to accept connections..."
-    sleep 2
-done
-
-echo "MariaDB setup complete."
+# Start MariaDB in the foreground using the init file
+mariadbd --user=mysql --datadir=/var/lib/mysql --init-file=/db1.sql

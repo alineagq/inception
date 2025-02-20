@@ -20,6 +20,6 @@ clean: down
 
 re: down up
 
-hard-re: clean up
+hard-re: clean setup up
 
 .PHONY: all up down clean re hard-re
