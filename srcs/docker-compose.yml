@@ -1,7 +1,6 @@
 version: '3.8'
 
 services:
-
   nginx:
     container_name: nginx
     build: requirements/nginx/
@@ -15,7 +14,8 @@ services:
     networks:
       - inception
     depends_on:
-      - wordpress
+      wordpress:
+        condition: service_healthy
 
   mariadb:
     container_name: mariadb
@@ -26,9 +26,8 @@ services:
       - mariadb:/var/lib/mysql
     networks:
       - inception
-    # TODO: fix it credentials
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "$MYSQL_USER", "-p$MYSQL_PASSWORD"]
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "$$MYSQL_USER", "-p$$MYSQL_PASSWORD"]  # Use $$ para escapar as variáveis
       interval: 10s
       timeout: 5s
       retries: 10
@@ -53,6 +52,35 @@ services:
       retries: 5
       start_period: 30s
 
+  prometheus:
+    build:
+      context: ./bonus/prometheus  # Diretório do Dockerfile do Prometheus
+    container_name: prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./bonus/prometheus/tools/prometheus.yml:/etc/prometheus/prometheus.yml
+    networks:
+      - inception  # Conectado à rede inception
+      - monitoramento
+
+  grafana:
+    build:
+      context: ./bonus/grafana  # Diretório do Dockerfile do Grafana
+    container_name: grafana
+    ports:
+      - "3000:3000"
+    volumes:
+      - grafana-storage:/var/lib/grafana
+      - ./bonus/grafana/tools/grafana.ini:/etc/grafana/grafana.ini
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    networks:
+      - inception  # Conectado à rede inception
+      - monitoramento
+    depends_on:
+      - prometheus
+
 volumes:
   wordpress:
     driver: local
@@ -68,6 +96,12 @@ volumes:
       device: /home/aqueiroz/inception/data/mariadb
       o: bind
 
+  grafana-storage:  # Volume para o Grafana
+    driver: local
+
 networks:
   inception:
+    driver: bridge
+
+  monitoramento:
     driver: bridge
