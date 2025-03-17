@@ -1,5 +1,5 @@
 # Dockerfile para Prometheus
-FROM alpine:3.20.5
+FROM alpine:3.20.6
 
 # Instale dependências necessárias
 RUN apk add --no-cache \

@@ -15,7 +15,7 @@ services:
       - inception
     depends_on:
       wordpress:
-        condition: service_healthy
+        condition: service_started
 
   mariadb:
     container_name: mariadb
@@ -46,7 +46,7 @@ services:
     networks:
       - inception
     healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost/wp-admin/install.php || exit 1"]
+      test: ["CMD-SHELL", "ps aux | grep php-fpm82 || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 5

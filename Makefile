@@ -7,11 +7,14 @@ setup:
 	@sudo mkdir -p /home/aqueiroz/inception/data/wordpress
 	@sudo mkdir -p /home/aqueiroz/inception/data/mariadb
 
-up:
-	docker compose -f srcs/docker-compose.yml up -d
+build:
+	docker-compose -f srcs/docker-compose.yml build
+
+up: build
+	docker-compose -f srcs/docker-compose.yml up -d
 
 down:
-	docker compose -f srcs/docker-compose.yml down
+	docker-compose -f srcs/docker-compose.yml down
 
 clean: down
 	docker system prune -a
