@@ -27,7 +27,7 @@ services:
     networks:
       - inception
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "$$MYSQL_USER", "-p$$MYSQL_PASSWORD"]
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "$$MYSQL_ADMIN_USER", "-p$$MYSQL_ADMIN_PASSWORD"]
       interval: 10s
       timeout: 5s
       retries: 10
@@ -79,6 +79,8 @@ services:
       - "9090:9090"
     volumes:
       - ./bonus/prometheus/tools/prometheus.yml:/etc/prometheus/prometheus.yml
+      - ./requirements/nginx/tools/nginx-selfsigned.crt:/etc/ssl/certs/nginx-selfsigned.crt
+      - ./requirements/nginx/tools/nginx-selfsigned.key:/etc/ssl/private/nginx-selfsigned.key
     networks:
       - inception
       - monitoramento
