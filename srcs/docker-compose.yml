@@ -27,7 +27,7 @@ services:
     networks:
       - inception
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "$$MYSQL_USER", "-p$$MYSQL_PASSWORD"]  # Use $$ para escapar as variáveis
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "$$MYSQL_USER", "-p$$MYSQL_PASSWORD"]
       interval: 10s
       timeout: 5s
       retries: 10
@@ -52,21 +52,40 @@ services:
       retries: 5
       start_period: 30s
 
+  vault:
+    container_name: vault
+    build: requirements/vault/
+    ports:
+      - "8200:8200"
+    environment:
+      - VAULT_ADDR=http://vault:8200
+    volumes:
+      - vault-data:/vault/data
+      - ./requirements/vault/tools/vault.json:/vault/config/vault.json
+    networks:
+      - inception
+    healthcheck:
+      test: ["CMD", "vault", "status"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+
   prometheus:
     build:
-      context: ./bonus/prometheus  # Diretório do Dockerfile do Prometheus
+      context: ./bonus/prometheus
     container_name: prometheus
     ports:
       - "9090:9090"
     volumes:
       - ./bonus/prometheus/tools/prometheus.yml:/etc/prometheus/prometheus.yml
     networks:
-      - inception  # Conectado à rede inception
+      - inception
       - monitoramento
 
   grafana:
     build:
-      context: ./bonus/grafana  # Diretório do Dockerfile do Grafana
+      context: ./bonus/grafana
     container_name: grafana
     ports:
       - "3000:3000"
@@ -76,7 +95,7 @@ services:
     environment:
       - GF_SECURITY_ADMIN_PASSWORD=admin
     networks:
-      - inception  # Conectado à rede inception
+      - inception
       - monitoramento
     depends_on:
       - prometheus
@@ -96,7 +115,10 @@ volumes:
       device: /home/aqueiroz/inception/data/mariadb
       o: bind
 
-  grafana-storage:  # Volume para o Grafana
+  vault-data:
+    driver: local
+
+  grafana-storage:
     driver: local
 
 networks:

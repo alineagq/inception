@@ -2,6 +2,10 @@
 
 cd /var/www/wordpress
 
+# Lê as senhas dos arquivos de secrets
+WP_DB_PASSWORD=$(cat "$WP_DB_PASSWORD_FILE")
+WP_ADMIN_PASSWORD=$(cat "$WP_ADMIN_PASSWORD_FILE")
+
 # Baixa o WordPress se os arquivos não existirem
 if [ ! -f index.php ]; then
     echo "Baixando WordPress..."

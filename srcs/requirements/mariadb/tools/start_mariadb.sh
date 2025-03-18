@@ -1,4 +1,9 @@
 #!/bin/sh
+
+# Lê as senhas dos arquivos de secrets
+MYSQL_PASSWORD=$(cat "$MYSQL_PASSWORD_FILE")
+MYSQL_ROOT_PASSWORD=$(cat "$MYSQL_ROOT_PASSWORD_FILE")
+
 # Create the initialization SQL file at /db1.sql
 
 cat <<EOF > /db1.sql
