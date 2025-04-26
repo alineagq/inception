@@ -3,6 +3,7 @@ version: '3.8'
 services:
   nginx:
     container_name: nginx
+    image: nginx
     build: requirements/nginx/
     env_file:
       - .env
@@ -10,7 +11,6 @@ services:
       - "443:443"
     volumes:
       - wordpress:/var/www/wordpress
-    restart: always
     networks:
       - inception
     depends_on:
@@ -19,6 +19,7 @@ services:
 
   mariadb:
     container_name: mariadb
+    image: mariadb
     build: requirements/mariadb/
     env_file:
       - .env
@@ -27,7 +28,7 @@ services:
     networks:
       - inception
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "$$MYSQL_ADMIN_USER", "-p$$MYSQL_ADMIN_PASSWORD"]
+      test: ["CMD", "mariadb-admin", "ping", "-h", "localhost", "-u", "$$WP_DB_USER", "-p$$WP_DB_PASSWORD"]
       interval: 10s
       timeout: 5s
       retries: 10
@@ -35,6 +36,7 @@ services:
 
   wordpress:
     container_name: wordpress
+    image: wordpress
     build: requirements/wordpress/
     env_file:
       - .env
@@ -52,56 +54,6 @@ services:
       retries: 5
       start_period: 30s
 
-  vault:
-    container_name: vault
-    build: requirements/vault/
-    ports:
-      - "8200:8200"
-    environment:
-      - VAULT_ADDR=http://vault:8200
-    volumes:
-      - vault-data:/vault/data
-      - ./requirements/vault/tools/vault.json:/vault/config/vault.json
-    networks:
-      - inception
-    healthcheck:
-      test: ["CMD", "vault", "status"]
-      interval: 30s
-      timeout: 10s
-      retries: 5
-      start_period: 30s
-
-  prometheus:
-    build:
-      context: ./bonus/prometheus
-    container_name: prometheus
-    ports:
-      - "9090:9090"
-    volumes:
-      - ./bonus/prometheus/tools/prometheus.yml:/etc/prometheus/prometheus.yml
-      - ./requirements/nginx/tools/nginx-selfsigned.crt:/etc/ssl/certs/nginx-selfsigned.crt
-      - ./requirements/nginx/tools/nginx-selfsigned.key:/etc/ssl/private/nginx-selfsigned.key
-    networks:
-      - inception
-      - monitoramento
-
-  grafana:
-    build:
-      context: ./bonus/grafana
-    container_name: grafana
-    ports:
-      - "3000:3000"
-    volumes:
-      - grafana-storage:/var/lib/grafana
-      - ./bonus/grafana/tools/grafana.ini:/etc/grafana/grafana.ini
-    environment:
-      - GF_SECURITY_ADMIN_PASSWORD=admin
-    networks:
-      - inception
-      - monitoramento
-    depends_on:
-      - prometheus
-
 volumes:
   wordpress:
     driver: local
@@ -117,15 +69,6 @@ volumes:
       device: /home/aqueiroz/inception/data/mariadb
       o: bind
 
-  vault-data:
-    driver: local
-
-  grafana-storage:
-    driver: local
-
 networks:
   inception:
-    driver: bridge
-
-  monitoramento:
     driver: bridge

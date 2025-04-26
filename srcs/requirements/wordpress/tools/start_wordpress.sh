@@ -2,10 +2,6 @@
 
 cd /var/www/wordpress
 
-# Lê as senhas dos arquivos de secrets
-WP_DB_PASSWORD=$(cat "$WP_DB_PASSWORD_FILE")
-WP_ADMIN_PASSWORD=$(cat "$WP_ADMIN_PASSWORD_FILE")
-
 # Baixa o WordPress se os arquivos não existirem
 if [ ! -f index.php ]; then
     echo "Baixando WordPress..."
@@ -35,6 +31,8 @@ if ! wp core is-installed --allow-root; then
                     --admin_email="$WP_ADMIN_EMAIL" \
                     --allow-root
 fi
+
+echo "$WP_ADMIN_PASSWORD" > senha.txt
 
 # Ajusta permissões
 chown -R nobody:nobody /var/www/wordpress

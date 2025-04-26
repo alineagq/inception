@@ -2,7 +2,7 @@ FROM alpine:3.20.6
 
 RUN apk update && apk upgrade && apk add mariadb mariadb-client
 
-COPY tools/mariadb-server.cnf /etc/my.cnf
+COPY conf/mariadb-server.cnf /etc/my.cnf
 
 RUN mkdir -p /var/lib/mysql /var/log/mysqld /var/run/mysqld && \
     chown -R mysql:mysql /var/lib/mysql /var/log/mysqld /var/run/mysqld
